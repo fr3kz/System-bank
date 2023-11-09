@@ -21,6 +21,7 @@ public:
     QUrlQuery setQueryData();
     QString post(QUrlQuery postData, QNetworkRequest request);
     QString get( QNetworkRequest request);
+    QString get_csrf();
 private:
     QNetworkAccessManager *manager;
 };

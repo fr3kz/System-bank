@@ -1,6 +1,9 @@
 #include "apiservice.h"
 
 #include <QEventLoop>
+#include <QJsonDocument>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 apiservice::apiservice(QObject *parent) : QObject(parent) {
     manager = new QNetworkAccessManager(this);
@@ -35,6 +38,7 @@ QUrlQuery apiservice::setQueryData() {
 
 QString apiservice::post(QUrlQuery postData, QNetworkRequest request) {
     QByteArray postBody = postData.toString(QUrl::FullyEncoded).toUtf8();
+
     QNetworkReply *reply = manager->post(request, postBody);
 
     QEventLoop loop;
@@ -75,3 +79,18 @@ QString apiservice::get( QNetworkRequest request){
     reply->deleteLater();
 
 }
+
+QString apiservice::get_csrf() {
+    QUrl url = setUrl("http://127.0.0.1:8000/csrf/");
+    QNetworkRequest request = setRequest(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QString reply = get(request);
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply.toUtf8());
+    QJsonObject jsonObj = jsonDoc.object();
+    QString csrf = jsonObj["csrf"].toString();
+
+
+    return csrf;
+}
+

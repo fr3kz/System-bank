@@ -22,8 +22,8 @@
      <rect>
       <x>200</x>
       <y>90</y>
-      <width>341</width>
-      <height>301</height>
+      <width>431</width>
+      <height>341</height>
      </rect>
     </property>
     <widget class="QWidget" name="page">
@@ -33,7 +33,7 @@
         <x>49</x>
         <y>19</y>
         <width>291</width>
-        <height>271</height>
+        <height>291</height>
        </rect>
       </property>
       <property name="title">
@@ -88,14 +88,14 @@
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
        <rect>
-        <x>-10</x>
-        <y>0</y>
-        <width>371</width>
-        <height>271</height>
+        <x>20</x>
+        <y>-10</y>
+        <width>381</width>
+        <height>341</height>
        </rect>
       </property>
       <property name="title">
-       <string>GroupBox</string>
+       <string/>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
@@ -109,6 +109,26 @@
         <widget class="QLineEdit" name="user_id_field_5"/>
        </item>
        <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Imie</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit"/>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Naziwsko</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_2"/>
+       </item>
+       <item>
         <widget class="QLabel" name="label_12">
          <property name="text">
           <string>Podaj hasło</string>
@@ -116,19 +136,19 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_7"/>
+        <widget class="QLineEdit" name="password_field_2"/>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_5">
          <property name="text">
-          <string>PushButton</string>
+          <string>Zarejestruj</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_2">
          <property name="text">
-          <string>wroc</string>
+          <string>Powrot</string>
          </property>
         </widget>
        </item>

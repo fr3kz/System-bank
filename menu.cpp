@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QJsonArray>
 #include <QSettings>
+#include <QJsonObject>
+#include <QJsonDocument>
 #include "apiservice.h"
 
 
@@ -43,6 +45,7 @@ Menu::Menu(QWidget *parent) :
    // ui->test->setText( jobj["username"].toString());
     ui->test->setText( jobj["username"].toString());
     user = &jobj;
+    delete api;
 
 }
 
@@ -132,7 +135,7 @@ void Menu::on_pushButton_2_clicked()
     }
 
     listwidget->show();
-
+    delete api;
 
 }
 
@@ -177,13 +180,13 @@ void Menu::on_pushButton_3_clicked()
 
     ui->label_9->setText(QString::number(jobj["account_number"].toInt()));
 
-
+    delete api;
 }
 
 //wyloguj
 void Menu::on_pushButton_4_clicked()
 {
-
+    QCoreApplication::quit();
 }
 
 
@@ -196,35 +199,83 @@ void Menu::on_pushButton_5_clicked()
 void Menu::on_commandLinkButton_clicked()
 
 {
-    QSettings settings("firma", "nienazwany1");
+  /*  QSettings settings("firma", "nienazwany1");
 
     QString title = ui->title->text();
     QString amount = ui->amount->text();
     QString accid = ui->acc_id->text();
 
-    apiservice *api = new apiservice(this);
+    QString sessionid = settings.value("sessionid").toString();
+    QByteArray sessionidbyte = sessionid.toUtf8();
+     apiservice *api1 = new apiservice(this);
 
-    QUrl url = api->setUrl("http://127.0.0.1:8000/accounts/transfer/");
-    QNetworkRequest request = api->setRequest(url);
+    QString csrf = api1->get_csrf();
+    QByteArray csrfByteArray = csrf.toUtf8();
 
-    QString sessionId = settings.value("sessionid").toString();
-    sessionId = "sessionid="+sessionId;
-    request = api->setHeader(1, "1", request);
-    QString csrfToken = settings.value("X-CSRFToken").toString();
-    request.setRawHeader("X-CSRFToken", csrfToken.toUtf8());
-    request.setRawHeader("Cookie", sessionId.toUtf8());
+    QUrl url = api1->setUrl("http://127.0.0.1:8000/accounts/transfer/");
+    QNetworkRequest request = api1->setRequest(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setRawHeader("X-CSRFToken",csrfByteArray);
+    QUrlQuery query = api1->setQueryData();
+    query.addQueryItem("amount", "1");
+    query.addQueryItem("accound1_id", "111111");
+    query.addQueryItem("accound2_id","333333");
+    query.addQueryItem("title","title");
 
-    QUrlQuery query = api->setQueryData();
-    query.addQueryItem("title", title);
-    query.addQueryItem("amount", amount);
-    query.addQueryItem("receiver", accid);
-    query.addQueryItem("sender", "111111");
-    QString response = api->post(query, request);
+    QString reply = api1->post(query,request);
 
-    QJsonDocument jdoc = QJsonDocument::fromJson(response.toUtf8());
-    QJsonObject jobj = jdoc.object();
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply.toUtf8());
+    QJsonObject jsonObj = jsonDoc.object();
+    qDebug() << jsonObj;
 
-    qDebug() << jobj;
+    delete api1;
+
+*/
+
+    QString title = ui->title->text();
+    std::string title_str = title.toStdString();
+    QString amount = ui->amount->text();
+    QString accid = ui->acc_id->text();
+    QUrlQuery postData;
+    postData.addQueryItem("account1_id", "111111");
+    postData.addQueryItem("account2_id", accid);
+    postData.addQueryItem("amount",amount);
+    postData.addQueryItem("title",title);
+
+    // Utwórz obiekt managera i żądanie
+    QNetworkAccessManager *manager = new QNetworkAccessManager;
+    QNetworkRequest request(QUrl("http://127.0.0.1:8000/accounts/transfer/"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+    // Wysyłanie żądania POST
+    QNetworkReply *reply = manager->post(request, postData.toString(QUrl::FullyEncoded).toUtf8());
+
+    // Oczekiwanie na zakończenie żądania
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    // Obsługa odpowiedzi
+    QString data;
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray responseData = reply->readAll();
+        data = QString(responseData);
+        QJsonDocument jdoc = QJsonDocument::fromJson(data.toUtf8());
+        QJsonObject jdata = jdoc.object();
+        qDebug() << jdata;
+    } else {
+        qDebug() << "Error: " << reply->errorString();
+    }
+
+    // Usuń obiekt odpowiedzi i managera
+    reply->deleteLater();
+    manager->deleteLater();
+
+
+
+
+
 
     ui->stackedWidget->setCurrentIndex(0);
 
