@@ -129,7 +129,11 @@ void Menu::on_pushButton_3_clicked()
 
     ui->label_7->setText(QString::number(jobj["account_balance"].toInt()));
 
-    ui->label_8->setText(QString::number(jobj["account_type"].toInt()));
+
+    if(jobj["account_type"].toInt() == 1){
+        ui->label_8->setText("Konto osobiste");
+
+    }
 
     ui->label_9->setText(QString::number(jobj["account_number"].toInt()));
 
