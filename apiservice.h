@@ -8,22 +8,24 @@
 #include <QUrlQuery>
 #include <QByteArray>
 #include <QNetworkReply>
+#include <QUrlQuery>
+#include <QJsonDocument>
+#include <QByteArray>
 
 class apiservice : public QObject
 {
     Q_OBJECT
-
 public:
-    apiservice(QObject *parent = nullptr);
-    QNetworkRequest setRequest(QUrl url);
-    QNetworkRequest setHeader(int i, const std::string &header,QNetworkRequest request);
-    QUrl setUrl(std::string url_string);
-    QUrlQuery setQueryData();
-    QString post(QUrlQuery postData, QNetworkRequest request);
-    QString get( QNetworkRequest request);
+    explicit apiservice(QObject *parent = nullptr);
+    QJsonDocument post(QString url_,QByteArray data);
+    QJsonDocument post_auth(QString url_,QByteArray data);
+    QJsonDocument get(QString url_);
+    QJsonDocument get_auth(QString url_);
     QString get_csrf();
-private:
-    QNetworkAccessManager *manager;
+
+
+signals:
+
 };
 
 #endif // APISERVICE_H

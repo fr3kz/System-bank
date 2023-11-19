@@ -1,96 +1,220 @@
 #include "apiservice.h"
-
 #include <QEventLoop>
 #include <QJsonDocument>
-#include <QJsonDocument>
 #include <QJsonObject>
+#include <QUrlQuery>
+#include <QDebug>
+#include <QByteArray>
+#include <QSettings>
+#include <QNetworkCookie>
 
-apiservice::apiservice(QObject *parent) : QObject(parent) {
-    manager = new QNetworkAccessManager(this);
-}
+apiservice::apiservice(QObject *parent) : QObject(parent) {}
 
-QNetworkRequest apiservice::setRequest(QUrl url) {
+QJsonDocument apiservice::post(QString url_, QByteArray data) {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url(url_);
     QNetworkRequest request(url);
-    return request;
-}
 
-QNetworkRequest apiservice::setHeader(int i, const std::string &header,QNetworkRequest request) {
+    QString csrf = get_csrf();
+    QByteArray csrfbyte = csrf.toUtf8();
 
-    if(i==1){
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    }else{
-        request.setRawHeader("Content-Type", "application/x-www-form-urlencoded");
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("X-CSRFToken", csrfbyte);
 
-        request.setRawHeader("Cookie", "sessionid=" + QString::fromStdString(header).toUtf8());
-    }
-    return request;
-    }
 
-QUrl apiservice::setUrl(std::string url_string) {
-    QUrl url(QString::fromStdString(url_string));
-    return url;
-}
 
-QUrlQuery apiservice::setQueryData() {
-    QUrlQuery postData;
-    return postData;
-}
-
-QString apiservice::post(QUrlQuery postData, QNetworkRequest request) {
-    QByteArray postBody = postData.toString(QUrl::FullyEncoded).toUtf8();
-
-    QNetworkReply *reply = manager->post(request, postBody);
+    QNetworkReply *reply = manager->post(request, data);
 
     QEventLoop loop;
-    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
 
-    QString data;
-
     if (reply->error() == QNetworkReply::NoError) {
-        QByteArray data_json = reply->readAll();
-        data = QString(data_json);
-       // qDebug() << data;
+        QByteArray responseData = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(responseData);
+        return jsonDocument;
+
     } else {
-        qDebug() << reply->errorString();
+        QByteArray responseData = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(responseData);
+        return jsonDocument;
+        qDebug() << "Error: " << reply->errorString();
     }
 
     reply->deleteLater();
-    return data;
 }
 
-// Dodanie funkcji GET
-QString apiservice::get( QNetworkRequest request){
+QJsonDocument apiservice::post_auth(QString url_,QByteArray data) {
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url(url_);
+    QNetworkRequest request(url);
+
+    QSettings settings("firma","nienazwany1");
+    QString sessid = settings.value("sessionid").toString();
+    QNetworkCookie sessionCookie("sessionid", sessid.toUtf8());
+    QList<QNetworkCookie> cookies;
+    cookies.append(sessionCookie);
+
+
+    QString csrf = get_csrf();
+    QByteArray csrfbyte = csrf.toUtf8();
+
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("X-CSRFToken", csrfbyte);
+
+
+
+    QNetworkReply *reply = manager->post(request, data);
+
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray responseData = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(responseData);
+        return jsonDocument;
+
+    } else {
+        QByteArray responseData = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(responseData);
+        return jsonDocument;
+        qDebug() << "Error: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+}
+
+QJsonDocument apiservice::get(QString url_) {
+    // Utwórz QNetworkAccessManager jako zmienną składową klasy, aby uniknąć wycieku pamięci
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+
+    QUrl url(url_);
+    QNetworkRequest request(url);
+
+    QString csrf = "j5f2ZRbXPfWcXWUhIOqYTfcljIsAFVskBA6QomHKXEBnWG7gV6vughB8U7N2A1Xz";
+    QByteArray csrfbyte = csrf.toUtf8();
+
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setRawHeader("X-CSRFToken", csrfbyte);
 
     QNetworkReply *reply = manager->get(request);
-    QEventLoop loop;
-    connect(reply,&QNetworkReply::finished,&loop,&QEventLoop::quit);
-    loop.exec();
 
-    QString data;
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+    loop.exec(); // Czekaj na zakończenie odpowiedzi
+
+    QJsonDocument datajson;
+
     if (reply->error() == QNetworkReply::NoError) {
-        QByteArray data_json = reply->readAll();
-        data = QString(data_json);
-        // qDebug() << data;
+        QByteArray data = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+
+        if (jsonDocument.isNull()) {
+            qDebug() << "Błąd parsowania JSON: Nieprawidłowy format danych";
+        } else {
+
+            return jsonDocument;
+        }
     } else {
-        qDebug() << reply->errorString();
+        qDebug() << "Błąd zapytania: " << reply->errorString();
     }
-    return data;
+
     reply->deleteLater();
 
+
+    return QJsonDocument();
+}
+
+QJsonDocument apiservice::get_auth(QString url_) {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QSettings settings("firma","nienazwany1");
+
+
+    QString sessid = settings.value("sessionid").toString();
+    QNetworkCookie sessionCookie("sessionid", sessid.toUtf8());
+    QList<QNetworkCookie> cookies;
+    cookies.append(sessionCookie);
+
+
+    QUrl url(url_);
+    QNetworkRequest request(url);
+
+    QString csrf = get_csrf();
+    QByteArray csrfbyte = csrf.toUtf8();
+
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setHeader(QNetworkRequest::CookieHeader, QVariant::fromValue(cookies));
+    request.setRawHeader("X-CSRFToken", csrfbyte);
+
+
+    QNetworkReply *reply = manager->get(request);
+
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+    loop.exec();
+
+    QJsonDocument datajson;
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray data = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+
+        if (jsonDocument.isNull()) {
+            qDebug() << "Błąd parsowania JSON: Nieprawidłowy format danych";
+        } else {
+
+            return jsonDocument;
+        }
+    } else {
+        qDebug() << "Błąd zapytania: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+
+    return QJsonDocument();
 }
 
 QString apiservice::get_csrf() {
-    QUrl url = setUrl("http://127.0.0.1:8000/csrf/");
-    QNetworkRequest request = setRequest(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    QString reply = get(request);
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply.toUtf8());
-    QJsonObject jsonObj = jsonDoc.object();
-    QString csrf = jsonObj["csrf"].toString();
+    QString url_ = "http://127.0.0.1:8000/csrf/";
 
 
-    return csrf;
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+
+    QUrl url(url_);
+    QNetworkRequest request(url);
+
+
+
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+    QNetworkReply *reply = manager->get(request);
+
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+    loop.exec();
+
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray data = reply->readAll();
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+
+        if (jsonDocument.isNull()) {
+            qDebug() << "Błąd parsowania JSON: Nieprawidłowy format danych";
+        } else {
+            QJsonObject jobj = jsonDocument.object();
+            return jobj["csrf"].toString();
+        }
+    } else {
+        qDebug() << "Błąd zapytania: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+
+
+    return QString();
 }
-

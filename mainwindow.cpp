@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QSettings>
@@ -13,7 +14,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow), apiService(new apiservice(this))
 {
     ui->setupUi(this);
 
@@ -23,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete apiService;
 }
 
 
@@ -35,44 +37,51 @@ void MainWindow::on_pushButton_clicked()
     QString user_id = ui->user_id_field->text();
     QString password = ui->password_field->text();
 
+    QJsonObject user;
+    user["username"] = user_id;
+    user["password"] = password;
+
+    if(user_id == "" || password == "")
+    {
+        QMessageBox::critical(this,"Error","Wypełnij wszystkie pola");
+        return;
+    }
+
+    QByteArray data = QJsonDocument(user).toJson();
 
 
-    apiservice *api = new apiservice(this);
+    QJsonDocument response = apiService->post("http://127.0.0.1:8000/login/",data);
+    QJsonObject responseObj = response.object();
+    qDebug() << responseObj;
 
-    QString csrf = api->get_csrf();
-    QByteArray csrfByteArray = csrf.toUtf8();
+    if(responseObj["value"].toString() != "")
+    {
+        qDebug() << responseObj["error"].toString();
+        QJsonObject errorobj = responseObj["error"].toObject();
+        QJsonArray valueArray = errorobj["value"].toArray();
 
-    QUrl url = api->setUrl("http://127.0.0.1:8000/login/");
-    QNetworkRequest request = api->setRequest(url);
-    request = api->setHeader(1, "1", request);
-    request.setRawHeader("X-CSRFToken",csrfByteArray);
+        QMessageBox::critical(this,"Error",valueArray[0].toString());
+        return;
+    }else{
 
-    QUrlQuery postData = api->setQueryData();
-    postData.addQueryItem("username", user_id);
-    postData.addQueryItem("password", password);
-
-    QString a = api->post(postData, request);
-    //dodanie sessionid
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(a.toUtf8());
-    QJsonObject jsonObj = jsonDoc.object();
-    //qDebug() << jsonObj;
-    qDebug() << jsonObj["sessionid"].toString();
-//    QJsonArray jsonArray = jsonDoc.array();
- //   QJsonObject firstObject = jsonArray[0].toObject();
-   // qDebug() << firstObject["sessonid"].toString();
-    QSettings settings("firma","nienazwany1");
-    settings.setValue("sessionid",jsonObj["sessionid"].toString());
-    settings.setValue("userid",jsonObj["userid"].toInt());
-    settings.setValue("X-CSRFToken",csrfByteArray);
-    qDebug() << jsonObj["csrf"].toString();
-    qDebug() << jsonObj["sessionid"].toString();
+        QSettings settings("firma","nienazwany1");
+        settings.setValue("csrf",responseObj["csrf"].toString());
+        settings.setValue("sessionid",responseObj["sessionid"].toString());
+        settings.setValue("userid",responseObj["userid"].toInt());
+        settings.setValue("account_number",responseObj["account_number"].toInt());
 
 
+        Menu *menu = new Menu(this);
+        hide();
+        menu->show();
+        return;
+    }
 
-    menu = new Menu(this);
-    hide();
-    menu->show();
-    delete api;
+    if (responseObj["error"].toString() != "") {
+        QMessageBox::critical(this, "Błąd", responseObj["value"].toString());
+        return;
+    }
+
 }
 
 
@@ -99,34 +108,63 @@ void MainWindow::on_pushButton_5_clicked()
     username = ui->user_id_field_5->text();
     password = ui->password_field_2->text();
 
-    apiservice *api = new apiservice(this);
-    QString csrf = api->get_csrf();
-    QByteArray csrfByteArray = csrf.toUtf8();
+    QJsonObject user;
+    user["username"] = username;
+    user["password"] = password;
+    user["firstname"] = firstname;
+    user["lastname"] = lastname;
 
-    QUrl url = api->setUrl("http://127.0.0.1:8000/register/");
-    QNetworkRequest request = api->setRequest(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    request.setRawHeader("X-CSRFToken",csrfByteArray);
-    QUrlQuery query = api->setQueryData();
-    query.addQueryItem("username", username);
-    query.addQueryItem("password", password);
-    query.addQueryItem("firstname",firstname);
-    query.addQueryItem("lastname",lastname);
-    QString reply = api->post(query,request);
+    if(username == "" || password == "" || firstname == "" || lastname == "")
+    {
+        QMessageBox::critical(this,"Error","Wypełnij wszystkie pola");
+        return;
+    }
 
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply.toUtf8());
-    QJsonObject jsonObj = jsonDoc.object();
+    QJsonDocument jsonDoc(user);
 
+    QByteArray data = jsonDoc.toJson();
+
+    QJsonDocument response = apiService->post("http://127.0.0.1:8000/register/",data);
+
+    QJsonObject responseObj = response.object();
+
+       if(responseObj["value"].toString() != "")
+    {
+        qDebug() << responseObj["error"].toString();
+        QJsonObject errorobj = responseObj["error"].toObject();
+        QJsonArray valueArray = errorobj["value"].toArray();
+
+        QMessageBox::critical(this,"Error",valueArray[0].toString());
+        return;
+    }else{
+        qDebug() << responseObj["account_number"].toInt();
+        QSettings settings("firma","nienazwany1");
+        settings.setValue("csrf",responseObj["csrf"].toString());
+        settings.setValue("sessionid",responseObj["sessionid"].toString());
+        settings.setValue("userid",responseObj["userid"].toInt());
+        settings.setValue("account_number",responseObj["account_number"].toInt());
+
+
+        Menu *menu = new Menu(this);
+        hide();
+        menu->show();
+        return;
+    }
+
+    if (responseObj["error"].toString() != "") {
+        QMessageBox::critical(this, "Błąd", responseObj["value"].toString());
+        return;
+    }
 
     QSettings settings("firma","nienazwany1");
-    settings.setValue("sessionid",jsonObj["sessionid"].toString());
-    settings.setValue("userid",jsonObj["userid"].toInt());
-    settings.setValue("X-CSRFToken",csrfByteArray);
+    qDebug() << responseObj;
+    settings.setValue("sessionid",responseObj["sessionid"].toString());
+    settings.setValue("userid",responseObj["userid"].toInt());
+    settings.setValue("X-CSRFToken",responseObj["csrf"].toString());
 
     menu = new Menu(this);
     menu->show();
 
-    delete api;
 
 
 }

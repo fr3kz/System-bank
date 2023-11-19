@@ -7,6 +7,7 @@
 #include <QNetworkReply>
 #include <QByteArray>
 #include <QListWidgetItem>
+#include "apiservice.h"
 
 namespace Ui {
 class Menu;
@@ -40,6 +41,7 @@ private slots:
 
 private:
     Ui::Menu *ui;
+    apiservice *apiService;
 };
 
 #endif // MENU_H

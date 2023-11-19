@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 
+#include "apiservice.h"
 #include "menu.h"
 
 QT_BEGIN_NAMESPACE
@@ -31,5 +32,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     Menu *menu;
+    apiservice *apiService;
 };
 #endif // MAINWINDOW_H
