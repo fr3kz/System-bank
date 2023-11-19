@@ -10,9 +10,9 @@ Bank App to prosta aplikacja bankowa napisana w języku C++ z użyciem framework
 
 2. **Przelewy:** Aplikacja umożliwia użytkownikom wysyłanie przelewów między kontami.![Panel Logowania](https://github.com/fr3kz/System-bank/blob/qt_code/screenshots/Zrzut%20ekranu%202023-11-19%20o%2015.40.05.png)![Panel Logowania](https://github.com/fr3kz/System-bank/blob/qt_code/screenshots/Zrzut%20ekranu%202023-11-19%20o%2015.40.29.png)
 
-3. **Historia Rachunku:** Użytkownicy mogą przeglądać historię transakcji na swoim koncie.
+3. **Historia Rachunku:** Użytkownicy mogą przeglądać historię transakcji na swoim koncie.![Panel Logowania](https://github.com/fr3kz/System-bank/blob/qt_code/screenshots/Zrzut%20ekranu%202023-11-19%20o%2016.23.23.png)
 
-4. **Szczegóły Konta:** Dostęp do szczegółowych informacji o koncie, takich jak saldo, numer konta itp.
+4. **Szczegóły Konta:** Dostęp do szczegółowych informacji o koncie, takich jak saldo, numer konta itp.![Panel Logowania](https://github.com/fr3kz/System-bank/blob/qt_code/screenshots/Zrzut%20ekranu%202023-11-19%20o%2016.20.24.png)
 
 ## Instalacja
 
